@@ -10,12 +10,13 @@ from http.cookies import SimpleCookie
 import pymysql as db
 from os import environ
 import code
+from sense import *
 
 # needs to check if info is already in before inserting
 
 def getCursor():
     try:
-      connection = db.connect('cs1.ucc.ie', 'bgl1', 'maGhii6o', '2018_bgl1')
+      connection = db.connect('cs1.ucc.ie', 'bgl1', SQLP, '2018_bgl1')
       cursor = connection.cursor(db.cursors.DictCursor)
       return cursor
     except (db.Error, IOError) as e:

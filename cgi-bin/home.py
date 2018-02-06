@@ -2,13 +2,29 @@
 from code import *
 from cgitb import enable 
 enable()
+import math
+import numpy
+import random
+import scipy
+import sklearn
+from sklearn.linear_model import LinearRegression
+
+
 print('Content-Type: text/html')
 print()
+
+print(xB)
 
 url = ""
 body = ""
 cursor = getCursor()
 form = FieldStorage()
+
+def code(dbID, dataID):
+  r = random.randint(11,99)
+
+  return(str(dbID) + '-001-' + str(r) + str(dataID))
+
 
 
 def databaseForm(cursor):
@@ -17,9 +33,20 @@ def databaseForm(cursor):
   try:
     cursor.execute("""select distinct dataID from fypDB""")
     # lst = []
-    for row in cursor.fetchall():
-        # lst+=[row['dataID']]
-      selectDB += """<option value="%s">%s</option>""" % (row['dataID'], row['dataID'])
+    if form.getvalue('dbID'):
+      for row in cursor.fetchall():
+        if row['dataID'] == form.getvalue('dbID'):
+          selectDB += """<option selected="selected" value="%s">%s</option>""" % (row['dataID'], row['dataID']) #code(form.getvalue('dbID'),row['dataID'])
+        else:
+          selectDB += """<option value="%s">%s</option>""" % (row['dataID'], row['dataID'])
+    else:
+      for row in cursor.fetchall():
+        selectDB += """<option value="%s">%s</option>""" % (row['dataID'], row['dataID'])
+    
+	
+	
+	
+    
 
     selectDB += "</select>"
     formCode = ("""<form action = "home.py" method = "post" target = "_self">%s
@@ -29,17 +56,18 @@ def databaseForm(cursor):
     print(e)
     return('databaseForm Error')
 
-if form.getvalue('dbID'):
+formCode = databaseForm(cursor)
 
+if form.getvalue('dbID'):
   try:
-    formCode = databaseForm(cursor)
     databaseID = form.getvalue('dbID')
     selectSample = "<select name='sampleID'>"
-    cursor.execute("""select distinct sampleID from fypDB where dataID = '%s'""" % (databaseID))
+    cursor.execute("""select distinct sampleID, dataID, sourceID from fypDB where dataID = '%s'""" % (databaseID))
     # lst = []
     for row in cursor.fetchall():
           # lst+=[row['dataID']]
-      selectSample += """<option value="%s">%s</option>""" % (row['sampleID'], row['sampleID'])
+      string = row['dataID'] + '-' + fill0s(row['sourceID'], 3) + '-' + fill0s(row['sampleID'],4)
+      selectSample += """<option value="%s">%s</option>""" % (row['sampleID'], code(databaseID, row['sampleID']))
 
     selectSample += "</select>"
     formCode += ("""<h1?Database: %s Select Sample</h1><form action = "sample.py" method = "post" target = "_self">%s
@@ -48,16 +76,14 @@ if form.getvalue('dbID'):
   except (db.Error, IOError) as e:
     print(e)
 
-else:
-  formCode = databaseForm(cursor)
-
   
+
 
 
 body = ("""
 <!DOCTYPE html>
 <html>
-<title>Search</title>
+<title>Home</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
@@ -80,8 +106,9 @@ html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
 <div class="w3-top">
   <div class="w3-bar w3-theme w3-top w3-left-align w3-large">
     <a class="w3-bar-item w3-button w3-right w3-hide-large w3-hover-white w3-large w3-theme-l1" href="javascript:void(0)" onclick="w3_open()"><i class="fa fa-bars"></i></a>
-   <a href="home.py" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Home</a>
-    <a href="upload.py" class="w3-bar-item w3-button w3-theme-l1" >Upload</a>
+    <a href="home.py" class="w3-bar-item w3-button w3-theme-l1" >Home</a>
+    <a href="upload.py" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Upload</a>
+    <a href="search.py" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Search</a>
 
   </div>
 </div>

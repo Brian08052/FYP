@@ -1,0 +1,175 @@
+#!/usr/local/bin/python3
+from code import *
+from cgitb import enable 
+enable()
+import math
+import numpy
+import random
+
+print('Content-Type: text/html')
+print()
+
+url = ""
+body = ""
+cursor = getCursor()
+form = FieldStorage()
+
+def code(dbID, dataID):
+  r = random.randint(11,99)
+
+  return(str(dbID) + '-001-' + str(r) + str(dataID))
+
+
+
+def databaseForm(cursor):
+
+  selectDB = """<h1>Select Database: </h1> <select name="dbID">"""
+  try:
+    cursor.execute("""select distinct dataID from fypDB""")
+    # lst = []
+    if form.getvalue('dbID'):
+      for row in cursor.fetchall():
+        if row['dataID'] == form.getvalue('dbID'):
+          selectDB += """<option selected="selected" value="%s">%s</option>""" % (row['dataID'], row['dataID']) #code(form.getvalue('dbID'),row['dataID'])
+        else:
+          selectDB += """<option value="%s">%s</option>""" % (row['dataID'], row['dataID'])
+    else:
+      for row in cursor.fetchall():
+        selectDB += """<option value="%s">%s</option>""" % (row['dataID'], row['dataID'])
+    
+	
+	
+	
+    
+
+    selectDB +=  """<input type="text" name="searchString" value="[100,10,1]">"""
+    selectDB += "</select>"
+    formCode = ("""<form action = "searchResult.py" method = "post" target = "_self">%s
+      <input type = "submit" value = "Go" /></form>""" % (selectDB))
+    return formCode
+  except (db.Error, IOError) as e:
+    print(e)
+    return('databaseForm Error')
+
+formCode = databaseForm(cursor)
+
+# if form.getvalue('dbID'):
+#   try:
+#     databaseID = form.getvalue('dbID')
+#     selectSample = "<select name='sampleID'>"
+#     cursor.execute("""select distinct sampleID, dataID, sourceID from fypDB where dataID = '%s'""" % (databaseID))
+#     # lst = []
+#     for row in cursor.fetchall():
+#           # lst+=[row['dataID']]
+#       string = row['dataID'] + '-' + fill0s(row['sourceID'], 3) + '-' + fill0s(row['sampleID'],4)
+#       selectSample += """<option value="%s">%s</option>""" % (row['sampleID'], code(databaseID, row['sampleID']))
+
+#     selectSample += "</select>"
+#     formCode += ("""<h1?Database: %s Select Sample</h1><form action = "sample.py" method = "post" target = "_self">%s
+#         <input type="hidden" value="true" name="search" />
+#         <input type="hidden" value="%s" name="dbID" /><input type = "submit" value = "Go" /></form>""" % (databaseID, selectSample,databaseID))
+#   except (db.Error, IOError) as e:
+#     print(e)
+
+  
+
+
+
+body = ("""
+<!DOCTYPE html>
+<html>
+<title>Home</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<link rel="stylesheet" href="https://www.w3schools.com/lib/w3-theme-black.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
+.w3-sidebar {
+  z-index: 3;
+  width: 250px;
+  top: 43px;
+  bottom: 0;
+  height: inherit;
+}
+</style>
+<body>
+
+<!-- Navbar -->
+<div class="w3-top">
+  <div class="w3-bar w3-theme w3-top w3-left-align w3-large">
+    <a class="w3-bar-item w3-button w3-right w3-hide-large w3-hover-white w3-large w3-theme-l1" href="javascript:void(0)" onclick="w3_open()"><i class="fa fa-bars"></i></a>
+    <a href="home.py" class="w3-bar-item w3-button w3-theme-l1" >Home</a>
+    <a href="upload.py" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Upload</a>
+    <a href="search.py" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Search</a>
+
+  </div>
+</div>
+
+<!-- Sidebar -->
+<nav class="w3-sidebar w3-bar-block w3-collapse w3-large w3-theme-l5 w3-animate-left" id="mySidebar">
+  <a href="javascript:void(0)" onclick="w3_close()" class="w3-right w3-xlarge w3-padding-large w3-hover-black w3-hide-large" title="Close Menu">
+    <i class="fa fa-remove"></i>
+  </a>
+  <h4 class="w3-bar-item"><b>Menu</b></h4>
+  <a class="w3-bar-item w3-button w3-hover-black" href="#">Info</a>
+</nav>
+
+<!-- Overlay effect when opening sidebar on small screens -->
+<div class="w3-overlay w3-hide-large" onclick="w3_close()" style="cursor:pointer" title="close side menu" id="myOverlay"></div>
+
+<!-- Main content: shift it to the right by 250 pixels when the sidebar is visible -->
+<div class="w3-main" style="margin-left:250px">
+
+  <div class="w3-row w3-padding-64">
+    <div class="w3-twothird w3-container">
+      <h1 class="w3-text-teal">Search</h1>
+       %s
+    </div>
+
+  </div>
+
+
+
+
+
+  <!-- Pagination -->
+
+
+
+
+<!-- END MAIN -->
+</div>
+
+<script>
+// Get the Sidebar
+var mySidebar = document.getElementById("mySidebar");
+
+// Get the DIV with overlay effect
+var overlayBg = document.getElementById("myOverlay");
+
+// Toggle between showing and hiding the sidebar, and add overlay effect
+function w3_open() {
+    if (mySidebar.style.display === 'block') {
+        mySidebar.style.display = 'none';
+        overlayBg.style.display = "none";
+    } else {
+        mySidebar.style.display = 'block';
+        overlayBg.style.display = "block";
+    }
+}
+
+// Close the sidebar with the close button
+function w3_close() {
+    mySidebar.style.display = "none";
+    overlayBg.style.display = "none";
+}
+</script>
+
+
+</body>
+</html>""" % (formCode))
+
+print(body)

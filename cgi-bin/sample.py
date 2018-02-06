@@ -18,7 +18,7 @@ sampleData = "No data"
 
 print("Content-Type: text/html")
 print()
-
+print('hi')
 print(idCode(4))
 
 cgitb.enable()
@@ -30,8 +30,9 @@ if form.getvalue('search'):
   dataID = form.getvalue('dbID')
   sampleID = form.getvalue('sampleID')
   sampleData = str(getData(cursor, dataID, sampleID))[1:]
-  
+  print("Sample Data: ", sampleData)
 
+  
 else:
   #if all data is available:
   # check data
@@ -67,6 +68,8 @@ else:
       #result = """<p>Sorry, we are experiencing database problems! People get on to Brian 0</p>"""
 
 
+
+loss = createGraph(sampleData, 'image')
 
 
 
@@ -137,7 +140,12 @@ html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
   <div class="w3-row w3-padding-64">
     <div class="w3-twothird w3-container">
       <h1 class="w3-text-teal">Sample: %s-%s</h1>
-       %s
+       SDATA %s
+
+
+       <img src="image.png" alt="graph">
+
+       Mean Squared error: %s
     </div>
     
   </div>
@@ -181,7 +189,7 @@ function w3_close() {
 
 
 </body>
-</html>"""%(dataID, sampleID,dataID, idCode(sampleID), sampleData))
+</html>"""%(dataID, sampleID,dataID, idCode(sampleID), sampleData, int(loss)))
 
 
 print(body)

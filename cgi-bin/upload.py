@@ -11,6 +11,7 @@ from http.cookies import SimpleCookie
 import pymysql as db
 from os import environ
 from codetest import *
+from sense import *
 test()
 #c = getCursor()
 
@@ -28,7 +29,7 @@ print()
 
 
 try:
-  connection = db.connect('cs1.ucc.ie', 'bgl1', 'maGhii6o', '2018_bgl1')
+  connection = db.connect('cs1.ucc.ie', 'bgl1', SQLP, '2018_bgl1')
   cursor = connection.cursor(db.cursors.DictCursor)
   cursor.execute("""select distinct dataID from fypDB""")
 except (db.Error, IOError) as e:

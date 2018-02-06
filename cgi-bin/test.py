@@ -1,14 +1,20 @@
-#!/usr/local/bin/python3
-import os
- 
-print("Content-Type: text/html")
-print()
- 
-import cgi,cgitb
-cgitb.enable()
-form = cgi.FieldStorage()
-print("Hi from test.py")
+def is_number(s):
+  try:
+    float(s)
+    return True
+  except ValueError:
+    pass
+  try:
+    import unicodedata
+    unicodedata.numeric(s)
+    return True
+  except (TypeError, ValueError):
+    pass
+  return False
 
-print("<font size=+1>Environment</font><\br>")
-for param in os.environ.keys():
-   print("<b>%20s</b>: %s<\br>" % (param, os.environ[param]))
+def prepSearchString(string):
+  s = string.split(',')
+  for i in s:
+    if not is_number(i):
+      return False
+  return True
