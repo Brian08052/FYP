@@ -13,27 +13,90 @@ import pymysql as db
 from os import environ
 import re
 
+cgitb.enable()
+form = cgi.FieldStorage()
+cursor = getCursor()
+
 non_decimal = re.compile(r'[^\d.,]+')
 sampleData = "No data"
 
 print("Content-Type: text/html")
 print()
-print('hi')
-print(idCode(4))
+#print(idCode(4))
+#print(form.getvalue('search'), form.getvalue('dbID'),form.getvalue('sampleID'))
 
-cgitb.enable()
-form = cgi.FieldStorage()
-cursor = getCursor()
+functions = [('Average Loss', 'averageLoss'), ('Similar Match', 'similarMatch'), ('Machine Learning 1', 'machineL1')]
+yAxes = []
+images = []
+formCode = ''
 
-# Get data from fields
+dataID = form.getvalue('dataID')
+sampleID = form.getvalue('sampleID')
+
+
+
+def generateImageCode():
+  print('Image Code')
+  imageCode = 'No Graphs'
+  for image in images:
+    imageCode += """<img src="%s.png" alt="graph">""" % (image)
+  return imageCode
+
+def getFuntionsIndex(name):
+  #index =0
+  for i in range(len(functions)):
+    if functions[i][1] == name:
+      return i
+  return 0
+
+
+def databaseForm(selectedVal = 'None'):
+  
+  selected = str(selectedVal)
+  formCode = ""
+
+  formCode = """<h1>Select Prediction Method: </h1><form action="sample.py" method="post" target="_self"> <select name="predictMethod">"""
+
+  if selected != 'None':
+    formCode += """<option selected="selected" value="%s">%s</option>""" % (selected, selected)
+    for function in functions:
+      if function[1] != selected:
+        formCode += """<option selected="selected" value="%s">%s</option>""" % (function[1], function[0])
+
+  else:
+    for function in functions:
+      formCode += """<option selected="selected" value="%s">%s</option>""" % (function[1], function[0])
+
+
+  formCode += "</select>"
+  formCode += ("""<input type="hidden" name="search" value="%s" />"""%(form.getvalue('search')))
+  formCode += ("""<input type="hidden" name="dbID" value="%s" />"""%(form.getvalue('dbID')))
+  formCode += ("""<input type="hidden" name="sampleID" value="%s" />"""%(form.getvalue('sampleID')))
+  formCode += ("""<input type = "submit" value = "Go" /></form>""")
+
+  return formCode
+
+
 if form.getvalue('search'):
-  dataID = form.getvalue('dbID')
-  sampleID = form.getvalue('sampleID')
-  sampleData = str(getData(cursor, dataID, sampleID))[1:]
+  #Gets the sample from the Database. What happens if there something wrong with the search? It will crash everything
+  sampleData = str(getData(cursor, form.getvalue('dbID'), form.getvalue('sampleID')))[1:]
+  #We really need to just convert this to an array here.
+
+  #if sampleData != error:
+  # sampleGoodFlag = true.
+
+  sampleData = strToArray(sampleData)
+  #removeFirstN(sampleData,1)
   print("Sample Data: ", sampleData)
 
+
+
+###********************* Ignore *************************
   
 else:
+  #This whole else statement is the uploading code.
+  #Ignore this for now, move to a different page later?
+
   #if all data is available:
   # check data
   #   upload data
@@ -63,18 +126,43 @@ else:
     sampleData = str(getData(cursor, dataID, sampleID))[1:]
 
 
+
   except (db.Error, IOError) as e:
       print(e)
       #result = """<p>Sorry, we are experiencing database problems! People get on to Brian 0</p>"""
 
-
-
-loss = createGraph(sampleData, 'image')
+##*******************************************************
 
 
 
 
 
+if form.getvalue('predictMethod'):
+  formCode = databaseForm(form.getvalue('predictMethod'))
+else:
+  formCode = databaseForm()
+
+
+
+if form.getvalue('predictMethod'):
+  yAxes += [generateYaxis(sampleData, method = form.getvalue('predictMethod'), n = -1)]
+  
+
+  #print('X1')
+  #loss = createGraph(sampleData, 'image', form.getvalue('predictMethod'))
+  #loss = createGraph(sampleData, 'image', form.getvalue('prediciton'))
+else:
+  yAxes += [generateYaxis(sampleData, method = 'default', n = -1)]
+  images += [createGraph('image', [yAxes[0]])]
+
+  #print('X2')
+  ##graph : 
+  #loss = createGraph(sampleData, 'image')
+
+
+yAxString = ''
+for yAx in yAxes:
+  yAxString += str(yAx)
 
 
 
@@ -140,12 +228,13 @@ html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
   <div class="w3-row w3-padding-64">
     <div class="w3-twothird w3-container">
       <h1 class="w3-text-teal">Sample: %s-%s</h1>
-       SDATA %s
+        %s 
 
-
-       <img src="image.png" alt="graph">
+       %s
 
        Mean Squared error: %s
+
+       %s
     </div>
     
   </div>
@@ -189,7 +278,7 @@ function w3_close() {
 
 
 </body>
-</html>"""%(dataID, sampleID,dataID, idCode(sampleID), sampleData, int(loss)))
+</html>"""%(dataID, sampleID, dataID, sampleID, sampleData, generateImageCode(), yAxString, formCode))
 
 
 print(body)

@@ -1,5 +1,7 @@
 #!/usr/local/bin/python3
 from code import *
+from searchCode import *
+from pickles import *
 from cgitb import enable 
 enable()
 import math
@@ -14,62 +16,42 @@ body = ""
 cursor = getCursor()
 form = FieldStorage()
 
-def code(dbID, dataID):
-  r = random.randint(11,99)
+data = "hi"
 
-  return(str(dbID) + '-001-' + str(r) + str(dataID))
+imageData = 'No Image'
 
-
-
-def databaseForm(cursor):
-
-  selectDB = """<h1>Select Database: </h1> <select name="dbID">"""
-  try:
-    cursor.execute("""select distinct dataID from fypDB""")
-    # lst = []
-    if form.getvalue('dbID'):
-      for row in cursor.fetchall():
-        if row['dataID'] == form.getvalue('dbID'):
-          selectDB += """<option selected="selected" value="%s">%s</option>""" % (row['dataID'], row['dataID']) #code(form.getvalue('dbID'),row['dataID'])
-        else:
-          selectDB += """<option value="%s">%s</option>""" % (row['dataID'], row['dataID'])
-    else:
-      for row in cursor.fetchall():
-        selectDB += """<option value="%s">%s</option>""" % (row['dataID'], row['dataID'])
-    
-	
-	
-	
-    
-
-    selectDB += "</select>"
-    formCode = ("""<form action = "home.py" method = "post" target = "_self">%s
-      <input type = "submit" value = "Go" /></form>""" % (selectDB))
-    return formCode
-  except (db.Error, IOError) as e:
-    print(e)
-    return('databaseForm Error')
-
-formCode = databaseForm(cursor)
 
 if form.getvalue('dbID'):
-  try:
-    databaseID = form.getvalue('dbID')
-    selectSample = "<select name='sampleID'>"
-    cursor.execute("""select distinct sampleID, dataID, sourceID from fypDB where dataID = '%s'""" % (databaseID))
-    # lst = []
-    for row in cursor.fetchall():
-          # lst+=[row['dataID']]
-      string = row['dataID'] + '-' + fill0s(row['sourceID'], 3) + '-' + fill0s(row['sampleID'],4)
-      selectSample += """<option value="%s">%s</option>""" % (row['sampleID'], code(databaseID, row['sampleID']))
+  imageData = ''
+  dataID = form.getvalue('dbID')
+  searchString = form.getvalue('searchString')
+  data = ("Database: " + dataID + ", input:" + searchString + "<br>")
+  print('dataID', dataID)
+  dic = getCleanDic(dataID)
 
-    selectSample += "</select>"
-    formCode += ("""<h1?Database: %s Select Sample</h1><form action = "sample.py" method = "post" target = "_self">%s
-        <input type="hidden" value="true" name="search" />
-        <input type="hidden" value="%s" name="dbID" /><input type = "submit" value = "Go" /></form>""" % (databaseID, selectSample,databaseID))
-  except (db.Error, IOError) as e:
-    print(e)
 
+  x = search(strToArray(searchString), dic)
+  firstIndex = x[1][0]
+  print('X: ', x)
+  image1 = scatter(dic[x[0]], x[1], strToArray(searchString), 'searchResultGraph')
+  imageData += ("""<img src="%s" alt="graph"><br>"""%(image1))
+  image2 = scatter(dic[x[0]][firstIndex:], 0, strToArray(searchString), 'searchResultGraph2')
+  imageData += ("""<img src="%s" alt="graph"><br>"""%(image2))
+
+  matchingValues = []
+  for i in x[1]:#for i in offset
+    matchingValues += [dic[x[0]][i]]
+
+  print("MV: ", matchingValues)
+
+  data += ("Match ID: " + str([x[0]]) + ", Offset: " + str(x[1]) + ", Matching Values: " + str(matchingValues) + " (Total Loss: " + str(x[2]) + ")") 
+
+  #for key in dic:
+    #print(dic[key])
+    #break
+
+else:
+  data = "no data"
   
 
 
@@ -77,7 +59,7 @@ if form.getvalue('dbID'):
 body = ("""
 <!DOCTYPE html>
 <html>
-<title>Home</title>
+<title>Search Result</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
@@ -100,9 +82,10 @@ html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
 <div class="w3-top">
   <div class="w3-bar w3-theme w3-top w3-left-align w3-large">
     <a class="w3-bar-item w3-button w3-right w3-hide-large w3-hover-white w3-large w3-theme-l1" href="javascript:void(0)" onclick="w3_open()"><i class="fa fa-bars"></i></a>
-    <a href="home.py" class="w3-bar-item w3-button w3-theme-l1" >Home</a>
+    <a href="home.py" class="w3-bar-item w3-button w3-hide-small w3-hover-white" >Home</a>
     <a href="upload.py" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Upload</a>
     <a href="search.py" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Search</a>
+    <a href="#" class="w3-bar-item w3-button w3-theme-l1">Search Result</a>
 
   </div>
 </div>
@@ -125,7 +108,7 @@ html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
   <div class="w3-row w3-padding-64">
     <div class="w3-twothird w3-container">
       <h1 class="w3-text-teal">Search</h1>
-       %s
+       %s %s
     </div>
 
   </div>
@@ -169,6 +152,6 @@ function w3_close() {
 
 
 </body>
-</html>""" % (formCode))
+</html>""" % (data, imageData))
 
 print(body)

@@ -1,9 +1,20 @@
+#!/usr/local/bin/python3
+from code import *
+from clean import *
+from searchCode import *
+from pickles import *
+from cgitb import enable 
+enable()
+import math
+import numpy
+import random
 from code import *
 import pymysql as db
 from sense import *
 import pickle
 
-
+def getCleanDic(dataID):
+    return cleanDict(createDictionary(dataID))
 
 #f = open('txt', 'w+')
 def createDictionary(dataID):
@@ -12,6 +23,7 @@ def createDictionary(dataID):
     string = ("""select * from fypDB where dataID = '%s'"""%(dataID))
     cursor.execute(string)
     for row in cursor.fetchall():
+        #print(row['sampleData'])
         d[row['sampleID']] = row['sampleData'].decode("utf-8") 
         #print(row['sampleID'])
     return d
@@ -30,6 +42,13 @@ def getLastUpdate(dataID):
 def getFileName(dataID):
   return 'Dic' + str(dataID)
 
+def createPickleWithDic(dataID, d):
+    fileName = getFileName(dataID)
+    file = open(fileName, 'wb+')
+    pickle.dump(d, file)
+    file.close()
+    return
+    
 def createPickle(dataID):
   d = createDictionary(dataID)
   fileName = getFileName(dataID)
@@ -84,6 +103,11 @@ def refreshPickles():
             updatePickle(row['dataID'])
     
 #d = createPickle('CancerMolar')
-refreshPickles()
+#refreshPickles()
+
+def cleanPickle(dataID):
+    d = getDicFromPickle(dataID)
+    d = cleanDic(d)
+    updatePickle(dataID)
 
 

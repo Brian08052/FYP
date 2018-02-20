@@ -42,7 +42,7 @@ def databaseForm(cursor):
 	
     
 
-    selectDB +=  """<input type="text" name="searchString" value="[100,10,1]">"""
+    selectDB +=  """<input type="text" name="searchString" value="100,10,1">"""
     selectDB += "</select>"
     formCode = ("""<form action = "searchResult.py" method = "post" target = "_self">%s
       <input type = "submit" value = "Go" /></form>""" % (selectDB))
