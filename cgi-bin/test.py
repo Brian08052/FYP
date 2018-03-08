@@ -1,20 +1,10 @@
-def is_number(s):
-  try:
-    float(s)
-    return True
-  except ValueError:
-    pass
-  try:
-    import unicodedata
-    unicodedata.numeric(s)
-    return True
-  except (TypeError, ValueError):
-    pass
-  return False
+#!/usr/bin/python3
 
-def prepSearchString(string):
-  s = string.split(',')
-  for i in s:
-    if not is_number(i):
-      return False
-  return True
+import sys
+
+print('Number of arguments:', len(sys.argv), 'arguments.')
+print('Argument List:', str(sys.argv))
+
+i = int(sys.argv[1])
+print(i)
+print(i*2)

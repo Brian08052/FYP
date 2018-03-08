@@ -2,6 +2,8 @@ from cgitb import enable
 from code import *
 from clean import *
 from searchCode import *
+from variables import *
+from prediction import *
 #from pickles import *
 #from searchCode import *
 enable()
@@ -19,6 +21,7 @@ import matplotlib as pl
 pl.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
+#import pandas as pd
 
 
 """
@@ -35,14 +38,112 @@ Fix the search predict function
 """
 xB = 11112
 
+class sampleObject:
+  def __init__(self, dbID, sampleID, data, alteredArray = None):
+    self.dbID = dbID
+    self.sampleID = sampleID
+    self.data = data
+    self.alteredArray = alteredArray
+
+  def getName(self):
+    return(str(self.dbID) + '-' + str(self.sampleID))
+
+  def getAlteredAxes(self):
+    if self.alteredArray == None:
+      print("Error, no altered Array")
+    xAx1 = []
+    xAx2 = []
+    yAx1 = []
+    yAx2 = []
+
+    for i in range(len(self.alteredArray)):
+      if self.alteredArray[i] == 0:
+        xAx1 += [self.data[i]]
+        yAx1 += [i]
+      else:
+        xAx2 += [self.data[i]]
+        yAx2 += [i]
+    return [[xAx1, yAx1], [xAx2, yAx2]]
+
+
+  def isComplete(self):
+    return self.data[len(self.data) - 1] < 4
+
+
+
+
+
+  def getAxes(self):
+    xAx = []
+    yAx = []
+    modifiedData = self.data[removeFirstValue(self.data):]
+    print(modifiedData)
+    for i in range(len(modifiedData)):
+      if modifiedData[i] != None:
+        xAx += [i]
+        yAx += [modifiedData[i]]
+    return [[yAx, xAx]]
+
+  def getOriginalAxes(self):
+    xAx = []
+    yAx = []
+    for i in range(len(self.data)):
+      if self.data[i] != None:
+        xAx += [i]
+        yAx += [self.data[i]]
+    return [[yAx, xAx]]
+
+
+  def getTableHTML(self):
+    arrayEnd = None
+    table = """<table style = "border: 1px solid black;"><tr>"""
+    for i in range(len(self.data)):
+      if self.alteredArray[i] == 0:
+        table += """<td style = "border: 1px solid black;" >%s</td>"""%(int(self.data[i]))
+      else:
+        table += """"<td style="color:red; border: 1px solid black;">%s</td>"""%(int(self.data[i]))
+
+    table += "</tr></table>"
+
+    return table 
+
+
+def genImageHTML(imageName):
+  return """<img src="%s" alt="%s">"""%(imageName, imageName)
+
+
+def removeFirstValue(array, multiple = 20):
+  #ok this should return n
+  while array[0] == None:
+    array = array[1:]
+  value1 = array[0]
+  if array[1] == None:
+    return 0
+
+  i1 = 1
+  while array[i1] == None:
+    i1+=1
+  
+  i2 = i1+1
+  while array[i2] == None:
+    i2 += 1
+
+
+
+  if len(array)>2:
+    if array[0] > array[i1]*multiple:
+      return i1
+    elif array[i1] > array[i2]*multiple:
+      return i2
+  return 0
+
+
 def removeFirstN(arrayString, n):
-  print("Removing for" , arrayString, n)
   index = -1
   for i in range(n):
       index = arrayString.find(",")
       if index >= 0:
         arrayString = arrayString[index+1:]
-  print(arrayString)
   return arrayString
 
 def is_number(s):
@@ -126,72 +227,11 @@ def uploadData(cursor, dataID, sampleID, text_content):
   cursor.execute(insert)
   cursor.execute('COMMIT')
 
-def averageLoss(array, length):
-  #handle bad length, bad arrays
-
-  predictedArray = []
-
-  if(len(array)) < 2:
-    predictedArray = array[0]
-    for i in range(1, length):
-      predictedArray[i] = predictedArray[i-1]/2
 
 
-  else:
-    percentLosses = []
-    
-    predictedArray += [array[0], array[1]]
-
-    for i in range(2, len(array)):
-      if(array[i] == 0):
-        predictedArray += [0]
-
-      else:
-        loss = array[i-2] - array[i-1]
-        if array[i-2] == 0:
-          percentLosses += [0]
-        else:
-          percentLosses += [loss/array[i-2]]
-
-        averageLoss = sum(percentLosses)/len(percentLosses)
-        predictedArray += [array[i-1]*averageLoss]
-
-  return predictedArray
-
-def searchSimilar(array, length, dataID = 'CancerMolar'):
-  print('Here lad')
-
-  predictedArray = [array[0]]
-  dic = getCleanDic(dataID)
-  for i in range(1, len(array)):
-    num = array[i]
-    x = search(strToArray(str(num)), dic)
-    print(x)
-    predictedArray += [x[3]]
-
-  return predictedArray
-
-def generatePrediction(method, array, length):
-  print("Here2", method)
-  predictedArray = []
-
-  if method == 'averageLoss':
-    predictedArray = averageLoss(array, length)
-
-  if method == 'similarMatch':
-    print("SS")
-    predictedArray = searchSimilar(array, length)
-    #pass
-
-  if method == 'machineL1':
-    predictedArray = averageLoss(array, length)
-
-  #for i in range(len(length)):
-    #generate the next number
 
 
-  return predictedArray
-
+#******************************* Graphing *********************************************************8
 def getGraphLimits(yAxes):
   longestArray = 0
   biggestValue = 0
@@ -205,30 +245,61 @@ def getGraphLimits(yAxes):
 
   return(longestArray, biggestValue)
 
-def createGraph(imageName, yAxes):
-  longestArray, biggestValue = getGraphLimits(yAxes)
+def createGraph2(axes, imageName):
   
-  xAx = []
 
-  print('Length of longest Array: ', max(yAxes,key=len))
+  xLimit = 0
+  yLimit = 0
+  xAxes = []
+  yAxes = []
+  for ax in axes:
+    
 
-  for i in range(len(max(yAxes,key=len))):
-    xAx += [i]
-  
-  for yAx in yAxes:
-    print(len(yAx))
-    if len(yAx) < len(max(yAxes,key=len)):
-      for i in range(len(max(yAxes,key=len)) - len(yAx)):
-        yAx.append(0)
-    plt.scatter(xAx, yAx, 25, 'blue')
-    #plt.plot(xAx, yAx, linewidth=2.0)
-  #plt.plot(xAx2, yAx2, linewidth=2.0)
+    values = ax[0]
+    index = ax[1]
 
-  plt.xlim(0, longestArray + 1)
-  plt.ylim(0, biggestValue * 1.1)
+    if len(ax[1]) > xLimit:
+      xLimit = len(ax[1])
+    if max(ax[0]) > yLimit:
+      yLimit = max(ax[0])
+    plt.scatter(ax[0], ax[1], 25)
+    yAxes += [ax[1]]
+  limits = getGraphLimits(yAxes)
+  plt.xlim(0, xLimit + 1)
+  plt.ylim(0, yLimit * 1.1)
   plt.draw()
-  plt.savefig('image')
+  plt.savefig(imageName)
 
+  return(imageName)#, loss?)
+
+def createGraph(axes, imageName):
+  colours = ['green', 'blue' , 'red']
+  counter = 0
+  #takes in all that you want on the one graph, in teh format
+  #[ [values] , [offset], [values], [offset] the value
+  xLimit = 0
+  yLimit = 0
+  xAxes = []
+  yAxes = []
+  for ax in axes:
+    counter += 1
+    if counter == len(colours):
+      counter = 0
+    if len(ax[1]) > xLimit:
+      xLimit = len(ax[1])
+    if max(ax[0]) > yLimit:
+      yLimit = max(ax[0])
+    plt.scatter(ax[1], ax[0], 25, colours[counter])
+    yAxes += [ax[1]]
+  #limits = getGraphLimits(yAxes)
+  #plt.xlim(0, xLimit + 1)
+  #plt.ylim(0, yLimit * 1.1)
+  plt.draw()
+  plt.show()
+  plt.savefig(imageName)
+  plt.close()
+
+  return(imageName)#, loss?)
   return(imageName)#, loss?)
 
 
@@ -244,73 +315,11 @@ def generateYaxis(array, method = 'default', n = -1):
     #return averageLoss(array, n)
 
 
-# def createGraph( arrayString, imageName, predictionName = 'averageLoss'):#, methodType, lossFunction = 'x'):
-#   #createGraph()
-
-
-
-#   #Accepts clean array
-#   arrayString = arrayString[1:len(arrayString)-1] #For some reason there were quotation marks at the start and end breaking it.
-#   #print('\n\n Array String:', arrayString, '\n\n',)
-#   array1 = arrayString
-#   array2 = []
-#   xAx = []
-#   yAx = []
-
-#   #if methodType == x:
-#   s2 = arrayString.split(',')
-#   #print('\ns2: ', s2)
-#   xAx = []
-#   yAx = []
-#   i = 0
-
-#   for n in s2:
-#     if n != '':
-#         xAx += [i]
-#         yAx += [int(n)]
-#     i += 1
-
-#   yAx2 = generatePrediction(predictionName, yAx, len(yAx))#what is this?
-
-#   print(xAx, yAx, yAx2)
-#   #return xAx, yAx
-#   plt.plot(xAx, yAx, linewidth=2.0)
-#   plt.plot(xAx, yAx2, linewidth=2.0)
-#   #plt.plot(xAx2, yAx2, linewidth=2.0)
-
-#   plt.draw()
-#   plt.savefig('image')
-
-#   losses = []
-
-#   for i in range(2, len(xAx)):
-#     losses += [(yAx[i]-yAx2[i])**2]
-
-
-#   if len(losses) == 0:
-#     return 0 
-
-#   else:
-#     return (sum(losses)/len(losses))
-
 
 #*********************************** All should be deleted/imported***************************************************************
 
 
-def getCleanDic(dataID):
-    return cleanDict(createDictionary(dataID))
 
-#f = open('txt', 'w+')
-def createDictionary(dataID):
-    d = {}
-    cursor = getCursor()
-    string = ("""select * from fypDB where dataID = '%s'"""%(dataID))
-    cursor.execute(string)
-    for row in cursor.fetchall():
-        #print(row['sampleData'])
-        d[row['sampleID']] = row['sampleData'].decode("utf-8") 
-        #print(row['sampleID'])
-    return d
 
 
 
@@ -341,18 +350,21 @@ def updateDataframe(dataID):
 """
 
 def genHeadDiv(activePage, additional = None):
-  pages = [("home.py", "Home"), ("upload.py", "Upload"), ("search.py", "Search")]
+  navPages = [("home.py", "Home"), ("upload.py", "Upload"), ("search.py", "Search")]
+  pages = navPages
 
   string = """
   <div class="w3-top">
       <div class="w3-bar w3-theme w3-top w3-left-align w3-large">
         <a class="w3-bar-item w3-button w3-right w3-hide-large w3-hover-white w3-large w3-theme-l1" href="javascript:void(0)" onclick="w3_open()"><i class="fa fa-bars"></i></a>"""
   for i in range(len(pages)):
-    if i == avtivePage:
-      string += """<a href="%s" class="w3-bar-item w3-button w3-hide-small w3-hover-white" >%s</a>"""%(pages[i][0], pages[i][1])
+    if i == activePage:
+      string += """<a href="%s" class="w3-bar-item w3-button w3-theme-l1">%s</a>"""%(pages[i][0], pages[i][1])
+      
 
     else:
-      string += """<a href="%s" class="w3-bar-item w3-button w3-theme-l1">%s</a>"""%(pages[i][0], pages[i][1])
+      string += """<a href="%s" class="w3-bar-item w3-button w3-hide-small w3-hover-white" >%s</a>"""%(pages[i][0], pages[i][1])
+      
 
   if additional != None:
     string += """<a href="#" class="w3-bar-item w3-button w3-theme-l1">%s</a>"""%(additional)
@@ -362,7 +374,7 @@ def genHeadDiv(activePage, additional = None):
 
   return string
 
-def generateHTMLbody(activePage, title, body, additionNav = None):
+def generateHTMLbody(activePage, title, body, additionalNav = None, additionalScript = ''):
   string = body = ("""
     <!DOCTYPE html>
     <html>
@@ -404,7 +416,7 @@ def generateHTMLbody(activePage, title, body, additionNav = None):
 
       <div class="w3-row w3-padding-64">
         <div class="w3-twothird w3-container">
-          <h1 class="w3-text-teal">Search</h1>
+          
            %s 
         </div>
 
@@ -445,8 +457,39 @@ def generateHTMLbody(activePage, title, body, additionNav = None):
         mySidebar.style.display = "none";
         overlayBg.style.display = "none";
     }
+    
+      %s
     </script>
 
 
     </body>
-    </html>""" %(title, genHeadDiv(activePage, additionalNav), body))
+
+    </html>""" %(title, genHeadDiv(activePage, additionalNav), body, additionalScript))
+
+  return string
+
+#############****************Prediction.py********************
+
+from code import *
+
+
+
+
+# def searchSimilar(array, length, dataID = 'CancerMolar'):
+#   #maybe make a dictionary of the three results and then search them each time to - NO this makes no sense, you already have all the data dummy
+#   #WAIT actually no, you could find the closes 2? and then the next one?
+#   #aren't we using the result object for this or something
+#   #result object has a predict method
+#   #it takes in a number, outputs the loss to the closest match, and the next the number-- take a weighted estimation ?
+
+#   predictedArray = [array[0]]
+#   dic = getCleanDic(dataID)
+#   for i in range(1, len(array)):
+#     num = array[i]
+#     x = search(strToArray(str(num)), dic)
+#     predictedArray += [x[3]]
+
+#   return predictedArray
+
+
+

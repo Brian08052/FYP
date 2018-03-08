@@ -41,9 +41,11 @@ def stringToArr(fullSet):
         out += [arr]
     return out
 
+
 ###################################################################################################
 
 def cleanSet(fullArray):
+
     cleanArray = []
     for sample in fullArray:
         fillZeroForNone(sample)
@@ -54,8 +56,35 @@ def cleanSet(fullArray):
     return cleanArray
 
 
+def cleanSample(sample, alteredArray = False):
+    origSample = sample.copy()
+    alteredArray = []
+    indexOfLast = 0
+
+
+    for i in range(len(origSample)):
+
+        if origSample[i] == None:
+            alteredArray += [1]
+        else:
+            indexOfLast = i
+            alteredArray += [0]
+    
+    sample, alteredArray = sample[:indexOfLast], alteredArray[:indexOfLast]
+    sample = fillZeroForNone(sample)
+    sample = clearRecurrence(sample)
+
+    if not tooManyBlanks(sample):
+        if alteredArray:
+            return replaceNones(sample), alteredArray
+        else:
+            return replaceNones(sample)
+    else:
+        return None #This is if theres too many blanks
+    
 def cleanDict(d, isString = True):
     cleanD = {}
+    badKeys = []
     for key in d:
         if d[key] == 'XXX' or d[key] == 'Not entered':
             pass
@@ -66,12 +95,14 @@ def cleanDict(d, isString = True):
             else:
                 sample = d[key].copy()
             
-            fillZeroForNone(sample)
-            clearRecurrence(sample)
-            if not tooManyBlanks(sample):
-                cleanD[key] = replaceNones(sample)
+            sample = cleanSample(sample)
+            if sample == None:
+                badKeys += [key]
+            if sample != None:
+                cleanD[key] = sample
                 #cleanD[key] = sample
 
+    print(badKeys)
     return cleanD
 
 

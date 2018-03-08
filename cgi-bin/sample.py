@@ -1,6 +1,7 @@
 #!/usr/local/bin/python3
 from cgitb import enable 
 from code import *
+from createDict import *
 enable()
 import cgitb
 import cgi
@@ -25,22 +26,47 @@ print()
 #print(idCode(4))
 #print(form.getvalue('search'), form.getvalue('dbID'),form.getvalue('sampleID'))
 
+sampleObjectName = ""
+sampleObjectData = ""
+
 functions = [('Average Loss', 'averageLoss'), ('Similar Match', 'similarMatch'), ('Machine Learning 1', 'machineL1')]
 yAxes = []
 images = []
-formCode = ''
+formCode = 'No data to predict.'
 
-dataID = form.getvalue('dataID')
+imageCode = ''
+completed = False
+
+dataID = form.getvalue('dbID')
 sampleID = form.getvalue('sampleID')
 
+print(dataID, sampleID)
+
+if (dataID != None and sampleID != None):
+#if form.getvalue('search'):
+  #print("Hello Worlds, you are so many, each so beautiful and each with tradgey ")
+  #cleanDic = getClea
+  cleanDic = getCleanDictionary(dataID)
+  rawDic = getRawDictionary(dataID)
+  if int(sampleID) in rawDic.keys():
+    sample = cleanSample(strToArray(rawDic[int(sampleID)]))
+
+    sampleObject = sampleObject(dataID, sampleID, sample[0], sample[1])
+    imageName = createGraph(sampleObject.getAlteredAxes(), sampleObject.getName())
+    
+    imageCode = genImageHTML(imageName)
+    sampleObjectData = sampleObject.getTableHTML()
+    sampleObjectName = sampleObject.getName()
+    completed = sampleObject.isComplete()
 
 
-def generateImageCode():
-  print('Image Code')
-  imageCode = 'No Graphs'
-  for image in images:
-    imageCode += """<img src="%s.png" alt="graph">""" % (image)
-  return imageCode
+  else:
+    sampleData = "Error"
+
+else:
+  print(sampleID, dataID)
+
+
 
 def getFuntionsIndex(name):
   #index =0
@@ -77,87 +103,75 @@ def databaseForm(selectedVal = 'None'):
   return formCode
 
 
-if form.getvalue('search'):
-  #Gets the sample from the Database. What happens if there something wrong with the search? It will crash everything
-  sampleData = str(getData(cursor, form.getvalue('dbID'), form.getvalue('sampleID')))[1:]
-  #We really need to just convert this to an array here.
-
-  #if sampleData != error:
-  # sampleGoodFlag = true.
-
-  sampleData = strToArray(sampleData)
-  #removeFirstN(sampleData,1)
-  print("Sample Data: ", sampleData)
-
 
 
 ###********************* Ignore *************************
-  
-else:
-  #This whole else statement is the uploading code.
-  #Ignore this for now, move to a different page later?
+    
+  # else:
+  #   #This whole else statement is the uploading code.
+  #   #Ignore this for now, move to a different page later?
 
-  #if all data is available:
-  # check data
-  #   upload data
-  # data not proper
-  #data not available
-  if form.getvalue('textcontent') and form.getvalue('dbID'):
-    #check data
-    text_content = non_decimal.sub('', form.getvalue('textcontent'))
-     #It goes in as a string like 1,2,3,,4,,,5 -this has to be really strict, so probably read from a CSV idk
-     #add the text content to the database
-     #refresh the dataframe
-  else:
-     text_content = "Not entered"
+  #   #if all data is available:
+  #   # check data
+  #   #   upload data
+  #   # data not proper
+  #   #data not available
+  #   if form.getvalue('textcontent') and form.getvalue('dbID'):
+  #     #check data
+  #     text_content = non_decimal.sub('', form.getvalue('textcontent'))
+  #      #It goes in as a string like 1,2,3,,4,,,5 -this has to be really strict, so probably read from a CSV idk
+  #      #add the text content to the database
+  #      #refresh the dataframe
+  #   else:
+  #      text_content = "Not entered"
 
-  if form.getvalue('dbID'):
-     dataID = form.getvalue('dbID')
-  else:
-     dataID = "Not entered"
+  #   if form.getvalue('dbID'):
+  #      dataID = form.getvalue('dbID')
+  #   else:
+  #      dataID = "Not entered"
 
-  x2 = 'initial'
-  try:
-    s = ("""select max(sampleID) from fypDB where dataID = '%s'"""%dataID)
-    print(s)
-    cursor.execute(s)
-    sampleID =  (cursor.fetchall()[0]['max(sampleID)']) + 1
-    uploadData(cursor, dataID, sampleID, text_content)
-    sampleData = str(getData(cursor, dataID, sampleID))[1:]
+  #   x2 = 'initial'
+  #   try:
+  #     s = ("""select max(sampleID) from fypDB where dataID = '%s'"""%dataID)
+  #     print(s)
+  #     cursor.execute(s)
+  #     sampleID =  (cursor.fetchall()[0]['max(sampleID)']) + 1
+  #     uploadData(cursor, dataID, sampleID, text_content)
+  #     sampleData = str(getData(cursor, dataID, sampleID))[1:]
 
 
 
-  except (db.Error, IOError) as e:
-      print(e)
-      #result = """<p>Sorry, we are experiencing database problems! People get on to Brian 0</p>"""
+  #   except (db.Error, IOError) as e:
+  #       print(e)
+  #       #result = """<p>Sorry, we are experiencing database problems! People get on to Brian 0</p>"""
 
 ##*******************************************************
 
 
 
 
+if not completed:
 
-if form.getvalue('predictMethod'):
-  formCode = databaseForm(form.getvalue('predictMethod'))
-else:
-  formCode = databaseForm()
+  if form.getvalue('predictMethod'):
+    formCode = databaseForm(form.getvalue('predictMethod'))
+  else:
+    formCode = databaseForm()
 
+  if form.getvalue('predictMethod'):
+    yAxes += [generateYaxis(sampleData, method = form.getvalue('predictMethod'), n = -1)]
+    
 
+    #print('X1')
+    #loss = createGraph(sampleData, 'image', form.getvalue('predictMethod'))
+    #loss = createGraph(sampleData, 'image', form.getvalue('prediciton'))
+  else:
+    pass
+    # yAxes += [generateYaxis(sampleData, method = 'default', n = -1)]
+    # images += [createGraph('image', [yAxes[0]])]
 
-if form.getvalue('predictMethod'):
-  yAxes += [generateYaxis(sampleData, method = form.getvalue('predictMethod'), n = -1)]
-  
-
-  #print('X1')
-  #loss = createGraph(sampleData, 'image', form.getvalue('predictMethod'))
-  #loss = createGraph(sampleData, 'image', form.getvalue('prediciton'))
-else:
-  yAxes += [generateYaxis(sampleData, method = 'default', n = -1)]
-  images += [createGraph('image', [yAxes[0]])]
-
-  #print('X2')
-  ##graph : 
-  #loss = createGraph(sampleData, 'image')
+    #print('X2')
+    ##graph : 
+    #loss = createGraph(sampleData, 'image')
 
 
 yAxString = ''
@@ -175,12 +189,10 @@ for yAx in yAxes:
 
 
 
-
-
 body = ("""
 <!DOCTYPE html>
 <html>
-<title>Sample %s-%s</title>
+<title>Sample %s</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
@@ -227,14 +239,12 @@ html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
 
   <div class="w3-row w3-padding-64">
     <div class="w3-twothird w3-container">
-      <h1 class="w3-text-teal">Sample: %s-%s</h1>
+      <h1 class="w3-text-teal">Sample: %s</h1>
         %s 
-
+        %s
        %s
 
-       Mean Squared error: %s
-
-       %s
+     
     </div>
     
   </div>
@@ -278,7 +288,7 @@ function w3_close() {
 
 
 </body>
-</html>"""%(dataID, sampleID, dataID, sampleID, sampleData, generateImageCode(), yAxString, formCode))
+</html>"""%(sampleObjectName, sampleObjectName, sampleObjectData, imageCode, formCode))
 
 
 print(body)
