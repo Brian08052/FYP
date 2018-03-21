@@ -27,7 +27,7 @@ body = ""
 
 
 def getUploadForm():
-  select = """<select name="dbID">"""
+  select = """<select name="dataID">"""
   lst = []
   try:
     connection = db.connect('cs1.ucc.ie', 'bgl1', SQLP, '2018_bgl1')
@@ -43,14 +43,15 @@ def getUploadForm():
   else:
       for row in cursor.fetchall():
           lst+=[row['dataID']]
-          select +="""<option value="%s">%s</option>"""%(row['dataID'],row['dataID'])
+          select +="""<option value="%s" >%s</option>"""%(row['dataID'],row['dataID'])
   select += "</select>"
 
 
-  form = ("""<form action = "sample2.py" method = "post" target = "_blank">%s
-    <textarea name = "text" cols = "40" rows = "2"> "1000, 900..."
+  form = ("""<form action = "sample.py" method = "post" target = "_blank">%s
+    <textarea name = "data" cols = "40" rows = "2"> "1000, 900..."
     </textarea>
-    <input type = "submit" value = "Submit" />
+     <input type = "hidden" value = "True" name = "upload" />
+      <input type = "submit" value = "Submit" />
     </form>"""%(select))
   return form
 

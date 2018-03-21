@@ -1,6 +1,7 @@
 #!/usr/local/bin/python3
 from code import *
 from cgitb import enable 
+import random
 enable()
 
 print('Content-Type: text/html')

@@ -101,14 +101,19 @@ if form.getvalue("update"):
   sampleID = form.getvalue("sampleID")
   dataID = form.getvalue("dataID")
   data = form.getvalue("data")
-  sampleData = ("Uploading: ", dataID, sampleID, data)
+  sampleData = ("Updating: ", dataID, sampleID, data)
   updateData(cursor, dataID, sampleID, data)
 
 if form.getvalue("upload"):
-  sampleID = form.getvalue("sampleID")
+  print('HERE')
   dataID = form.getvalue("dataID")
   data = form.getvalue("data")
+  print(dataID, data)
+  sampleID = getNextSampleID(form.getvalue("dataID"))
+  print(dataID, data)
   sampleData = ("Uploading: ", dataID, sampleID, data)
+
+  print('<br> End of upload')
   uploadData(cursor, dataID, sampleID, data)
 
 else:
