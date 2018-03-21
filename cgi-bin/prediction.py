@@ -66,7 +66,7 @@ def searchSimilarLosses(array, length, resultObjects):
     array[i] = int(array[i])
   return array
 
-def getValuesK(array, length, resultObject)
+#def getValuesK(array, length, resultObject)
 
 
 

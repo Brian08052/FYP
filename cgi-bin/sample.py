@@ -1,72 +1,31 @@
 #!/usr/local/bin/python3
 from cgitb import enable 
-from code import *
-from createDict import *
 enable()
-import cgitb
-import cgi
 from cgi import FieldStorage, escape
-from hashlib import sha256
-from time import time
-from shelve import open
-from http.cookies import SimpleCookie
+form = FieldStorage()
+
 import pymysql as db
-from os import environ
 import re
 
-cgitb.enable()
-form = cgi.FieldStorage()
+from code import *
+from createDict import *
+from sampleObject import *
+
+
 cursor = getCursor()
+
+so = sampleObject('x', 1, '1,2,3')
+
+sampleObjectName, sampleObjectName, sampleObjectData, imageCode, formCode = "name", "name", "data", "imageCode", "formCode"
 
 non_decimal = re.compile(r'[^\d.,]+')
 sampleData = "No data"
 
 print("Content-Type: text/html")
 print()
-#print(idCode(4))
-#print(form.getvalue('search'), form.getvalue('dbID'),form.getvalue('sampleID'))
 
-sampleObjectName = ""
-sampleObjectData = ""
-
-functions = [('Average Loss', 'averageLoss'), ('Similar Match', 'similarMatch'), ('Machine Learning 1', 'machineL1')]
-yAxes = []
-images = []
-formCode = 'No data to predict.'
-
-imageCode = ''
-completed = False
-
-dataID = form.getvalue('dbID')
-sampleID = form.getvalue('sampleID')
-
-print(dataID, sampleID)
-
-if (dataID != None and sampleID != None):
-#if form.getvalue('search'):
-  #print("Hello Worlds, you are so many, each so beautiful and each with tradgey ")
-  #cleanDic = getClea
-  cleanDic = getCleanDictionary(dataID)
-  rawDic = getRawDictionary(dataID)
-  if int(sampleID) in rawDic.keys():
-    sample = cleanSample(strToArray(rawDic[int(sampleID)]))
-
-    sampleObject = sampleObject(dataID, sampleID, sample[0], sample[1])
-    imageName = createGraph(sampleObject.getAlteredAxes(), sampleObject.getName())
-    
-    imageCode = genImageHTML(imageName)
-    sampleObjectData = sampleObject.getTableHTML()
-    sampleObjectName = sampleObject.getName()
-    completed = sampleObject.isComplete()
-
-
-  else:
-    sampleData = "Error"
-
-else:
-  print(sampleID, dataID)
-
-
+dataID = None
+sampleID = None
 
 def getFuntionsIndex(name):
   #index =0
@@ -96,11 +55,100 @@ def databaseForm(selectedVal = 'None'):
 
   formCode += "</select>"
   formCode += ("""<input type="hidden" name="search" value="%s" />"""%(form.getvalue('search')))
-  formCode += ("""<input type="hidden" name="dbID" value="%s" />"""%(form.getvalue('dbID')))
+  formCode += ("""<input type="hidden" name="dataID" value="%s" />"""%(form.getvalue('dataID')))
   formCode += ("""<input type="hidden" name="sampleID" value="%s" />"""%(form.getvalue('sampleID')))
   formCode += ("""<input type = "submit" value = "Go" /></form>""")
 
   return formCode
+
+
+def updateForm(sampleID, dataID, data):
+  if data != None:
+
+    dataString = ''
+    for d in data:
+      print('d:', d)
+      if d == 0:
+        break
+      elif d == None:
+        dataString += ', '
+      else:
+        dataString += str(int(d)) + ', '
+
+
+    return ("""<form action = "update.py" method = "post" target = "_blank">
+      <input type="hidden" value="%s" name="data" />
+      <input type="hidden" value="%s" name="dataID" />
+      <input type="hidden" value="%s" name="sampleID" />
+      <input type="hidden" value="True" name="update" />
+      <input type = "submit" value = "Update" />
+      </form>"""%(dataString, dataID, sampleID))
+
+  else:
+    return "Error"
+
+# if form.getvalue("update"):
+#   result  =  updateSample(dbID, sampleID, data)
+#   if not result:
+#     dataFail.
+
+#   else:
+#     sampleID = form.getvalue("sampleID")
+#     dataID = form.getvalue("dataID")
+#     data = getData(cursor, dataID, sampleID)
+    
+if form.getvalue("update"):
+  sampleID = form.getvalue("sampleID")
+  dataID = form.getvalue("dataID")
+  data = form.getvalue("data")
+  sampleData = ("Uploading: ", dataID, sampleID, data)
+  updateData(cursor, dataID, sampleID, data)
+
+if form.getvalue("upload"):
+  sampleID = form.getvalue("sampleID")
+  dataID = form.getvalue("dataID")
+  data = form.getvalue("data")
+  sampleData = ("Uploading: ", dataID, sampleID, data)
+  uploadData(cursor, dataID, sampleID, data)
+
+else:
+  sampleID = form.getvalue("sampleID")
+  dataID = form.getvalue("dataID")
+  data = getData(cursor, dataID, sampleID)
+
+#So at this point, you have your dataID and your sampleID. All you need baby.
+
+if (dataID != None and sampleID != None):
+  
+  so = sampleObject(dataID, sampleID, data)
+  
+  sampleData = so.getAlteredAxes(True)
+
+  myUpdateForm = updateForm(sampleID, dataID, so.dataArray)
+
+  imageName = createGraph(so.getAlteredAxes(True), so.getName())
+  imageCode = genImageHTML(imageName)
+  sampleObjectData = so.getTableHTML(True)
+  sampleObjectName = so.getName()
+  completed = so.isComplete
+  #print(sampleObjectName, sampleObjectName, sampleObjectData, imageCode, formCode, sampleData)
+
+
+  # else:
+  #   sampleData = "Error"
+
+else:
+  print(sampleID, dataID)
+  print("Error in getting sampleID or dataID")
+
+
+
+
+functions = [('Average Loss', 'averageLoss'), ('Similar Match', 'similarMatch'), ('Machine Learning 1', 'machineL1')]
+formCode = 'No data to predict.'
+
+
+
 
 
 
@@ -116,7 +164,7 @@ def databaseForm(selectedVal = 'None'):
   #   #   upload data
   #   # data not proper
   #   #data not available
-  #   if form.getvalue('textcontent') and form.getvalue('dbID'):
+  #   if form.getvalue('textcontent') and form.getvalue('dataID'):
   #     #check data
   #     text_content = non_decimal.sub('', form.getvalue('textcontent'))
   #      #It goes in as a string like 1,2,3,,4,,,5 -this has to be really strict, so probably read from a CSV idk
@@ -125,8 +173,8 @@ def databaseForm(selectedVal = 'None'):
   #   else:
   #      text_content = "Not entered"
 
-  #   if form.getvalue('dbID'):
-  #      dataID = form.getvalue('dbID')
+  #   if form.getvalue('dataID'):
+  #      dataID = form.getvalue('dataID')
   #   else:
   #      dataID = "Not entered"
 
@@ -151,6 +199,7 @@ def databaseForm(selectedVal = 'None'):
 
 
 if not completed:
+  formCode = "No Data to predict. "
 
   if form.getvalue('predictMethod'):
     formCode = databaseForm(form.getvalue('predictMethod'))
@@ -160,30 +209,10 @@ if not completed:
   if form.getvalue('predictMethod'):
     yAxes += [generateYaxis(sampleData, method = form.getvalue('predictMethod'), n = -1)]
     
-
-    #print('X1')
-    #loss = createGraph(sampleData, 'image', form.getvalue('predictMethod'))
-    #loss = createGraph(sampleData, 'image', form.getvalue('prediciton'))
   else:
     pass
-    # yAxes += [generateYaxis(sampleData, method = 'default', n = -1)]
-    # images += [createGraph('image', [yAxes[0]])]
-
-    #print('X2')
-    ##graph : 
-    #loss = createGraph(sampleData, 'image')
-
-
-yAxString = ''
-for yAx in yAxes:
-  yAxString += str(yAx)
-
-
-
-
-
-
-
+else:
+  formCode = databaseForm()
 
 
 
@@ -228,7 +257,7 @@ html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
     <i class="fa fa-remove"></i>
   </a>
   <h4 class="w3-bar-item"><b>Menu</b></h4>
-  <a class="w3-bar-item w3-button w3-hover-black" href="#">Update Sample</a>
+  <a class="w3-bar-item w3-button w3-hover-black" href="#">%s</a>
 </nav>
 
 <!-- Overlay effect when opening sidebar on small screens -->
@@ -288,7 +317,7 @@ function w3_close() {
 
 
 </body>
-</html>"""%(sampleObjectName, sampleObjectName, sampleObjectData, imageCode, formCode))
+</html>"""%(sampleObjectName, myUpdateForm, sampleObjectName, sampleObjectData, imageCode, formCode))
 
 
 print(body)

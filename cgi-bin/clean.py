@@ -21,7 +21,7 @@ def strToArray(s):
         arr = s.split(',')
         returnArray = []
         for s in arr:
-            if s == '':
+            if s == '' or s == ' ':
                 returnArray += [None]
             else:
                 #error checking
@@ -73,6 +73,7 @@ def cleanSample(sample, alteredArray = False):
     sample, alteredArray = sample[:indexOfLast], alteredArray[:indexOfLast]
     sample = fillZeroForNone(sample)
     sample = clearRecurrence(sample)
+    sample = removeTrailingNones(sample)
 
     if not tooManyBlanks(sample):
         if alteredArray:
@@ -110,7 +111,11 @@ def cleanDict(d, isString = True):
 
 #************************************* Helper Functions*********************************
 
+def removeTrailingNones(sample):
+    while len(sample)>1 and sample[len(sample)-1] == None:
+        sample = sample[:len(sample)-1]
 
+    return sample
 def fillZeroForNone(sample):
     #recursive function that replaces Nones with 0 if the next value in the array is 0.
     #clear recurrence handles nones that come after

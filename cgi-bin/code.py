@@ -38,78 +38,86 @@ Fix the search predict function
 """
 xB = 11112
 
-class sampleObject:
-  def __init__(self, dbID, sampleID, data, alteredArray = None):
-    self.dbID = dbID
-    self.sampleID = sampleID
-    self.data = data
-    self.alteredArray = alteredArray
+# class sampleObject:
+#   def __init__(self, dbID, sampleID, data, alteredArray = None):
+#     self.dbID = dbID
+#     self.sampleID = sampleID
+#     self.data = data
+#     self.alteredArray = alteredArray
 
-  def getName(self):
-    return(str(self.dbID) + '-' + str(self.sampleID))
+#   def getName(self):
+#     return(str(self.dbID) + '-' + str(self.sampleID))
 
-  def getAlteredAxes(self):
-    if self.alteredArray == None:
-      print("Error, no altered Array")
-    xAx1 = []
-    xAx2 = []
-    yAx1 = []
-    yAx2 = []
+#   def getAlteredAxes(self):
+#     if self.alteredArray == None:
+#       print("Error, no altered Array")
+#     xAx1 = []
+#     xAx2 = []
+#     yAx1 = []
+#     yAx2 = []
 
-    for i in range(len(self.alteredArray)):
-      if self.alteredArray[i] == 0:
-        xAx1 += [self.data[i]]
-        yAx1 += [i]
-      else:
-        xAx2 += [self.data[i]]
-        yAx2 += [i]
-    return [[xAx1, yAx1], [xAx2, yAx2]]
-
-
-  def isComplete(self):
-    return self.data[len(self.data) - 1] < 4
+#     for i in range(len(self.alteredArray)):
+#       if self.alteredArray[i] == 0:
+#         xAx1 += [self.data[i]]
+#         yAx1 += [i]
+#       else:
+#         xAx2 += [self.data[i]]
+#         yAx2 += [i]
+#     return [[xAx1, yAx1], [xAx2, yAx2]]
 
 
+#   def isComplete(self):
+#     return self.data[len(self.data) - 1] < 4
 
 
 
-  def getAxes(self):
-    xAx = []
-    yAx = []
-    modifiedData = self.data[removeFirstValue(self.data):]
-    print(modifiedData)
-    for i in range(len(modifiedData)):
-      if modifiedData[i] != None:
-        xAx += [i]
-        yAx += [modifiedData[i]]
-    return [[yAx, xAx]]
-
-  def getOriginalAxes(self):
-    xAx = []
-    yAx = []
-    for i in range(len(self.data)):
-      if self.data[i] != None:
-        xAx += [i]
-        yAx += [self.data[i]]
-    return [[yAx, xAx]]
 
 
-  def getTableHTML(self):
-    arrayEnd = None
-    table = """<table style = "border: 1px solid black;"><tr>"""
-    for i in range(len(self.data)):
-      if self.alteredArray[i] == 0:
-        table += """<td style = "border: 1px solid black;" >%s</td>"""%(int(self.data[i]))
-      else:
-        table += """"<td style="color:red; border: 1px solid black;">%s</td>"""%(int(self.data[i]))
+#   def getAxes(self):
+#     xAx = []
+#     yAx = []
+#     modifiedData = self.data[removeFirstValue(self.data):]
+#     print(modifiedData)
+#     for i in range(len(modifiedData)):
+#       if modifiedData[i] != None:
+#         xAx += [i]
+#         yAx += [modifiedData[i]]
+#     return [[yAx, xAx]]
 
-    table += "</tr></table>"
+#   def getOriginalAxes(self):
+#     xAx = []
+#     yAx = []
+#     for i in range(len(self.data)):
+#       if self.data[i] != None:
+#         xAx += [i]
+#         yAx += [self.data[i]]
+#     return [[yAx, xAx]]
 
-    return table 
+
+#   def getTableHTML(self):
+#     arrayEnd = None
+#     table = """<table style = "border: 1px solid black;"><tr>"""
+#     for i in range(len(self.data)):
+#       if self.alteredArray[i] == 0:
+#         table += """<td style = "border: 1px solid black;" >%s</td>"""%(int(self.data[i]))
+#       else:
+#         table += """"<td style="color:red; border: 1px solid black;">%s</td>"""%(int(self.data[i]))
+
+#     table += "</tr></table>"
+
+#     return table 
 
 
 def genImageHTML(imageName):
   return """<img src="%s" alt="%s">"""%(imageName, imageName)
+
+
+def getNextSampleID(dataID):
+  cursor = getCursor()
+  #s = ("""select max(sampleID) from fypDB where dataID = '%s'"""%dataID)
+  #getCursor().execute(s)
+  cursor.execute(("""select max(sampleID) from fypDB where dataID = '%s'"""%dataID))
+  return (cursor.fetchall()[0]['max(sampleID)']) + 1
 
 
 def removeFirstValue(array, multiple = 20):
@@ -227,6 +235,10 @@ def uploadData(cursor, dataID, sampleID, text_content):
   cursor.execute(insert)
   cursor.execute('COMMIT')
 
+def updateData(cursor, dataID, sampleID, text_content):
+  update = """UPDATE fypDB SET sampleData = '%s' WHERE dataID = '%s' AND sampleID = %s;"""%(text_content, dataID, sampleID)
+  cursor.execute(update)
+  cursor.execute('COMMIT')
 
 
 
@@ -358,7 +370,7 @@ def genHeadDiv(activePage, additional = None):
       <div class="w3-bar w3-theme w3-top w3-left-align w3-large">
         <a class="w3-bar-item w3-button w3-right w3-hide-large w3-hover-white w3-large w3-theme-l1" href="javascript:void(0)" onclick="w3_open()"><i class="fa fa-bars"></i></a>"""
   for i in range(len(pages)):
-    if i == activePage:
+    if activePage != None and i == activePage:
       string += """<a href="%s" class="w3-bar-item w3-button w3-theme-l1">%s</a>"""%(pages[i][0], pages[i][1])
       
 
@@ -470,7 +482,6 @@ def generateHTMLbody(activePage, title, body, additionalNav = None, additionalSc
 
 #############****************Prediction.py********************
 
-from code import *
 
 
 

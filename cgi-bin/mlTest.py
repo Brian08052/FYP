@@ -167,10 +167,10 @@ def predicMLlogLoss(dic, array, length):
 
 	return(array)
 
-x = predicMLlogLoss(dic, [1000, 100], 20)
-print(x)
-y = predictML(dic, [10000, 9000], 20)
-print(y)
+# x = predicMLlogLoss(dic, [1000, 100], 20)
+# print(x)
+# y = predictML(dic, [10000, 9000], 20)
+# print(y)
 
 
 
